@@ -1,0 +1,28 @@
+# time_capsule.py
+
+import os
+import cryptography.fernet as fernet
+from datetime import datetime
+
+def create_time_capsule(content, unlock_date, filename="capsule"):
+    key = fernet.Fernet.generate_key()
+    cipher = fernet.Fernet(key)
+    encrypted_content = cipher.encrypt(content.encode())
+
+    with open(f"{filename}.capsule", "wb") as file:
+        file.write(unlock_date.encode() + b"\n" + key + b"\n" + encrypted_content)
+
+def unlock_capsule(file_path):
+    with open(file_path, "rb") as file:
+        unlock_date = file.readline().strip().decode()
+        key = file.readline().strip()
+        content = file.read()
+
+    if datetime.now().strftime("%Y-%m-%d") < unlock_date:
+        return "Cannot open yet!"
+    cipher = fernet.Fernet(key)
+    return cipher.decrypt(content).decode()
+
+# Usage
+create_time_capsule("This is a secret!", "2024-12-25")
+print(unlock_capsule("capsule.capsule"))
